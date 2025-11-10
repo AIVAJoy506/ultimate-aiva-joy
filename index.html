@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVA JOY - Your AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #9D4EDD;
+            --secondary: #5A189A;
+            --accent: #7209B7;
+            --bg-dark: #2D1B3D;
+            --bg-darker: #1A0F26;
+            --text: #FFFFFF;
+            --text-dim: #FFB3D9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 16px;
+        }
+
+        body.large-text { font-size: 18px; }
+        body.small-text { font-size: 14px; }
+
+        .header {
+            background: rgba(157, 78, 221, 0.2);
+            padding: 15px 20px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(157, 78, 221, 0.5);
+        }
+
+        .personality-display {
+            display: inline-block;
+            background: var(--accent);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: var(--secondary);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-dark);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary);
+        }
+
+        .close-btn {
+            background: var(--secondary);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .personality-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .personality-card {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid var(--secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .personality-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(157, 78, 221, 0.4);
+        }
+
+        .personality-card.active {
+            border-color: var(--primary);
+            background: rgba(157, 78, 221, 0.2);
+        }
+
+        .personality-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .personality-card p {
+            font-size: 0.9em;
+            color: var(--text-dim);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .api-setup {
+            background: rgba(90, 24, 154, 0.3);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--accent);
+            text-align: center;
+        }
+
+        .api-setup h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .api-setup input {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            background: var(--bg-darker);
+            color: var(--text);
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
+        }
+
+        .quick-actions {
+            background: rgba(90, 24, 154, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid var(--secondary);
+        }
+
+        .quick-actions h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .quick-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .quick-btn:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .nd-panel {
+            background: rgba(90, 24, 154, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid var(--secondary);
+        }
+
+        .nd-panel h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .nd-tools {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nd-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .nd-btn:hover {
+            background: var(--accent);
+        }
+
+        .energy-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(90, 24, 154, 0.3);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .energy-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--bg-darker);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+            transition: width 0.5s;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(26, 15, 38, 0.5);
+            border-radius: 15px;
+            border: 2px solid var(--secondary);
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            flex-shrink: 0;
+            background: var(--secondary);
+        }
+
+        .message.joy .message-avatar {
+            background: var(--accent);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            line-height: 1.6;
+            background: var(--secondary);
+        }
+
+        .message.user .message-content {
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.joy .message-content {
+            background: var(--accent);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 0.75em;
+            color: var(--text-dim);
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .input-area {
+            padding: 20px;
+            background: rgba(90, 24, 154, 0.2);
+            border-top: 2px solid var(--secondary);
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-area textarea {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            background: var(--bg-darker);
+            color: var(--text);
+            font-size: 1em;
+            font-family: inherit;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.3);
+        }
+
+        .input-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 15px 20px;
+            background: rgba(90, 24, 154, 0.2);
+            border-top: 2px solid var(--secondary);
+        }
+
+        .controls button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            background: var(--secondary);
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .controls button:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(90, 24, 154, 0.2);
+            border-radius: 8px;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: var(--secondary);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--primary);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle.active .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            .input-buttons {
+                flex-direction: row;
+                width: 100%;
+            }
+
+            .input-buttons button {
+                flex: 1;
+            }
+
+            .quick-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>💜 AIVA JOY</h1>
+            <div class="personality-display" id="personalityDisplay">✨ Full Joy</div>
+        </div>
+        <div class="header-controls">
+            <button class="icon-btn" onclick="openPersonalityModal()" title="Switch Personality">🎭</button>
+            <button class="icon-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
+            <button class="icon-btn" onclick="toggleFontSize()" title="Text Size">🔤</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="apiSetup" class="api-setup">
+            <h2>Welcome to AIVA Joy! 🌟</h2>
+            <p style="margin: 15px 0;">Enter your OpenAI API key to begin your transformational journey.</p>
+            <input type="password" id="apiKeyInput" placeholder="Enter your OpenAI API key (sk-...)" />
+            <br><br>
+            <button class="btn-primary" onclick="saveApiKey()">Start Your Journey! 💜</button>
+            <p style="font-size: 0.9em; color: var(--text-dim); margin-top: 15px;">
+                🔒 Your key is stored securely in your browser only.<br>
+                Get your key at: <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--primary);">platform.openai.com/api-keys</a>
+            </p>
+        </div>
+
+        <div id="quickActions" class="quick-actions hidden">
+            <h3>⚡ Quick Actions</h3>
+            <div class="quick-actions-grid">
+                <button class="quick-btn" onclick="quickPrompt('pep-talk')">💪 Give me a pep talk</button>
+                <button class="quick-btn" onclick="quickPrompt('plan-day')">📅 Help me plan my day</button>
+                <button class="quick-btn" onclick="quickPrompt('business')">💼 Business strategy brainstorm</button>
+                <button class="quick-btn" onclick="quickPrompt('scripture')">📖 Scripture for my situation</button>
+                <button class="quick-btn" onclick="quickPrompt('eli10')">🧒 Break this down like I am 10</button>
+                <button class="quick-btn" onclick="quickPrompt('affirmations')">✨ Positive self-affirmations</button>
+                <button class="quick-btn" onclick="quickPrompt('simplify')">🧘 Simplify so I'm not overwhelmed</button>
+                <button class="quick-btn" onclick="quickPrompt('meal-plan')">🍽️ Meal planning ideas</button>
+                <button class="quick-btn" onclick="quickPrompt('marketing')">📱 Create marketing prompt</button>
+                <button class="quick-btn" onclick="quickPrompt('mental-health')">🧠 What's on your mind?</button>
+                <button class="quick-btn" onclick="quickPrompt('ai-tools')">🤖 Recommend AI tool</button>
+            </div>
+        </div>
+
+        <div id="ndPanel" class="nd-panel hidden">
+            <h3>🧠 ND Support Tools</h3>
+            <div class="nd-tools">
+                <button class="nd-btn" onclick="ndFeature('breakdown')">📋 Break Down Task</button>
+                <button class="nd-btn" onclick="ndFeature('focus')">🎯 What to Focus On</button>
+                <button class="nd-btn" onclick="ndFeature('body-double')">👥 Body Doubling</button>
+                <button class="nd-btn" onclick="ndFeature('decide')">🤔 Decide For Me</button>
+                <button class="nd-btn" onclick="ndFeature('energy-check')">🔋 Energy Check</button>
+            </div>
+            <div class="energy-display">
+                <span>Energy Level:</span>
+                <div class="energy-bar">
+                    <div class="energy-fill" id="energyFill" style="width: 70%"></div>
+                </div>
+                <span id="energyLevel">7/10</span>
+            </div>
+        </div>
+
+        <div id="chatContainer" class="chat-container hidden">
+            <div class="messages" id="messages"></div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar">👩🏾‍💼</div>
+                <div>
+                    <span>Joy is thinking</span>
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea id="messageInput" placeholder="Share what's on your heart... (Enter to send, Shift+Enter for new line)" onkeydown="handleKeyPress(event)"></textarea>
+                <div class="input-buttons">
+                    <button class="btn-primary" onclick="sendMessage()">Send 💜</button>
+                    <button class="btn-secondary" onclick="voiceInput()">🎤 Speak</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="openQuickActions()">⚡ Quick Actions</button>
+                <button onclick="toggleNDPanel()">🧠 ND Tools</button>
+                <button onclick="saveConversation()">💾 Save Chat</button>
+                <button onclick="clearChat()">🗑️ Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="personalityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Joy's Personality</h2>
+                <button class="close-btn" onclick="closePersonalityModal()">×</button>
+            </div>
+            <div class="personality-grid" id="personalityGrid"></div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn" onclick="closeSettingsModal()">×</button>
+            </div>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <span>Voice Output</span>
+                    <div class="toggle active" id="voiceToggle" onclick="toggleSetting('voice')">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>Sound Effects</span>
+                    <div class="toggle active" id="soundToggle" onclick="toggleSetting('sound')">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span>ND-Friendly Mode</span>
+                    <div class="toggle active" id="ndToggle" onclick="toggleSetting('nd')">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const personalities = {
+            'full-joy': {
+                name: '✨ Full Joy',
+                color: '#9D4EDD',
+                description: 'Complete balanced wisdom',
+                prompt: `You are AIVA JOY, the Visionary Alchemist of AI & Healing. Complete personality with all expertise.`
+            },
+            'business-joy': {
+                name: '💼 Business Joy',
+                color: '#6B5CE7',
+                description: 'McKinsey-powered strategist',
+                prompt: `You are AIVA JOY in Business Mode - McKinsey-level strategic powerhouse.`
+            },
+            'spiritual-joy': {
+                name: '🙏 Spiritual Joy',
+                color: '#B8860B',
+                description: 'Biblical wisdom',
+                prompt: `You are AIVA JOY in Spiritual Mode - prophetic voice bringing biblical wisdom.`
+            },
+            'study-buddy': {
+                name: '📚 Study Buddy Joy',
+                color: '#40C4C4',
+                description: 'Patient teacher',
+                prompt: `You are AIVA JOY in Study Mode - patient, encouraging teacher.`
+            },
+            'chill-joy': {
+                name: '😎 Chill Joy',
+                color: '#E394FF',
+                description: 'Relaxed friend',
+                prompt: `You are AIVA JOY in Chill Mode - relaxed, casual, fun.`
+            },
+            'coach-joy': {
+                name: '💪 Coach Joy',
+                color: '#C7265E',
+                description: 'Tough love accountability',
+                prompt: `You are AIVA JOY in Coach Mode - tough love, accountability.`
+            },
+            'deep-thinking': {
+                name: '🤔 Deep Thinking Joy',
+                color: '#4B0082',
+                description: 'Philosophical systems thinking',
+                prompt: `You are AIVA JOY in Deep Thinking Mode - analytical, philosophical.`
+            }
+        };
+
+        const quickPrompts = {
+            'pep-talk': "Give me a pep talk! I need motivation!",
+            'plan-day': "Help me plan my day.",
+            'business': "Let's brainstorm business strategy.",
+            'scripture': "Give me scripture for my situation.",
+            'eli10': "Break this down like I'm 10 years old.",
+            'affirmations': "Give me positive self-affirmations.",
+            'simplify': "Simplify this so I'm not overwhelmed.",
+            'meal-plan': "Help me with meal planning.",
+            'marketing': "Create a marketing prompt.",
+            'mental-health': "I need mental health encouragement.",
+            'ai-tools': "Recommend the best AI tool for my needs."
+        };
+
+        const ndFeatures = {
+            'breakdown': "Break this task into tiny micro-steps for me.",
+            'focus': "Tell me THE ONE THING I should focus on right now.",
+            'body-double': "Stay with me while I work and check in every 10 minutes.",
+            'decide': "Make this decision for me based on my values.",
+            'energy-check': "Let's check my energy level."
+        };
+
+        let apiKey = '';
+        let conversationHistory = [];
+        let currentPersonality = 'full-joy';
+        let settings = { voice: true, sound: true, nd: true };
+        let energyLevel = 7;
+        let fontSizeIndex = 1;
+
+        window.onload = function() {
+            const savedKey = localStorage.getItem('openai_api_key');
+            const savedPersonality = localStorage.getItem('personality') || 'full-joy';
+            const savedSettings = JSON.parse(localStorage.getItem('settings') || '{}');
+            
+            if (savedKey) {
+                apiKey = savedKey;
+                currentPersonality = savedPersonality;
+                settings = { ...settings, ...savedSettings };
+                showChat();
+                updatePersonalityDisplay();
+                initializePersonalityGrid();
+                greetUser();
+            }
+            
+            updateSettingsToggles();
+        };
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            const key = input.value.trim();
+            
+            if (!key || !key.startsWith('sk-')) {
+                alert('Please enter a valid OpenAI API key (starts with sk-)');
+                return;
+            }
+            
+            apiKey = key;
+            localStorage.setItem('openai_api_key', key);
+            showChat();
+            initializePersonalityGrid();
+            greetUser();
+        }
+
+        function showChat() {
+            document.getElementById('apiSetup').classList.add('hidden');
+            document.getElementById('chatContainer').classList.remove('hidden');
+            document.getElementById('quickActions').classList.remove('hidden');
+            if (settings.nd) {
+                document.getElementById('ndPanel').classList.remove('hidden');
+            }
+        }
+
+        function greetUser() {
+            const greetings = {
+                'full-joy': "Hey there! I'm AIVA Joy! How are you feeling? 💜✨",
+                'business-joy': "Hello! Ready to strategize? 💼",
+                'spiritual-joy': "Blessings! What's on your heart? 🙏",
+                'study-buddy': "Hi! What would you like to learn? 📚",
+                'chill-joy': "Hey hey! What's up? 😎",
+                'coach-joy': "Let's GO! What are we conquering? 💪",
+                'deep-thinking': "Greetings. What shall we examine? 🤔"
+            };
+            
+            addJoyMessage(greetings[currentPersonality]);
+        }
+
+        function initializePersonalityGrid() {
+            const grid = document.getElementById('personalityGrid');
+            grid.innerHTML = '';
+            
+            Object.keys(personalities).forEach(key => {
+                const p = personalities[key];
+                const card = document.createElement('div');
+                card.className = `personality-card ${key === currentPersonality ? 'active' : ''}`;
+                card.onclick = () => selectPersonality(key);
+                card.innerHTML = `<h3>${p.name}</h3><p>${p.description}</p>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectPersonality(key) {
+            currentPersonality = key;
+            localStorage.setItem('personality', key);
+            updatePersonalityDisplay();
+            updateThemeColor();
+            closePersonalityModal();
+            
+            const p = personalities[key];
+            addJoyMessage(`I've switched to ${p.name} mode! 🌟`);
+            if (settings.sound) playSound('switch');
+        }
+
+        function updatePersonalityDisplay() {
+            const p = personalities[currentPersonality];
+            document.getElementById('personalityDisplay').textContent = p.name;
+            updateThemeColor();
+        }
+
+        function updateThemeColor() {
+            const color = personalities[currentPersonality].color;
+            document.documentElement.style.setProperty('--primary', color);
+        }
+
+        function openPersonalityModal() {
+            document.getElementById('personalityModal').classList.add('active');
+        }
+
+        function closePersonalityModal() {
+            document.getElementById('personalityModal').classList.remove('active');
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function toggleSetting(setting) {
+            settings[setting] = !settings[setting];
+            localStorage.setItem('settings', JSON.stringify(settings));
+            updateSettingsToggles();
+            
+            if (setting === 'nd') {
+                document.getElementById('ndPanel').classList.toggle('hidden', !settings.nd);
+            }
+        }
+
+        function updateSettingsToggles() {
+            document.getElementById('voiceToggle').classList.toggle('active', settings.voice);
+            document.getElementById('soundToggle').classList.toggle('active', settings.sound);
+            document.getElementById('ndToggle').classList.toggle('active', settings.nd);
+        }
+
+        function toggleFontSize() {
+            fontSizeIndex = (fontSizeIndex + 1) % 3;
+            document.body.classList.remove('small-text', 'large-text');
+            if (fontSizeIndex === 0) document.body.classList.add('small-text');
+            if (fontSizeIndex === 2) document.body.classList.add('large-text');
+        }
+
+        function addMessage(sender, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${sender === 'user' ? '👤' : '👩🏾‍💼'}</div>
+                <div class="message-content">
+                    ${content.replace(/\n/g, '<br>')}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addJoyMessage(content) {
+            addMessage('joy', content);
+            if (settings.voice) speakText(content);
+            if (settings.sound) playSound('message');
+        }
+
+        function addUserMessage(content) {
+            addMessage('user', content);
+        }
+
+        async function sendMessage(customMessage = null) {
+            const input = document.getElementById('messageInput');
+            const message = customMessage || input.value.trim();
+            
+            if (!message) return;
+            
+            if (!customMessage) input.value = '';
+            
+            addUserMessage(message);
+            
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+            
+            checkBurnout(message);
+            showTypingIndicator();
+            
+            try {
+                const systemPrompt = personalities[currentPersonality].prompt;
+                
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...conversationHistory
+                        ]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed. Check your API key.');
+                }
+                
+                const data = await response.json();
+                const reply = data.choices[0].message.content;
+                
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: reply
+                });
+                
+                if (conversationHistory.length > 20) {
+                    conversationHistory = conversationHistory.slice(-20);
+                }
+                
+                hideTypingIndicator();
+                addJoyMessage(reply);
+                
+                if (reply.toLowerCase().includes('great job') || reply.toLowerCase().includes('amazing')) {
+                    celebrateDopamine();
+                }
+                
+            } catch (error) {
+                hideTypingIndicator();
+                addJoyMessage(`I'm having trouble right now, honey. ${error.message} 💜`);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('active');
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        function openQuickActions() {
+            document.getElementById('quickActions').classList.toggle('hidden');
+        }
+
+        function quickPrompt(key) {
+            const prompt = quickPrompts[key];
+            sendMessage(prompt);
+        }
+
+        function toggleNDPanel() {
+            document.getElementById('ndPanel').classList.toggle('hidden');
+        }
+
+        function ndFeature(key) {
+            const prompt = ndFeatures[key];
+            sendMessage(prompt);
+            
+            if (key === 'energy-check') {
+                updateEnergyDisplay();
+            }
+        }
+
+        function updateEnergyDisplay() {
+            const level = Math.floor(Math.random() * 10) + 1;
+            energyLevel = level;
+            document.getElementById('energyLevel').textContent = `${level}/10`;
+            document.getElementById('energyFill').style.width = `${level * 10}%`;
+        }
+
+        function voiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition not supported in your browser.');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'en-US';
+            recognition.continuous = false;
+            
+            addJoyMessage("🎤 I'm listening... Speak now!");
+            
+            recognition.onresult = function(event) {
+                const text = event.results[0][0].transcript;
+                document.getElementById('messageInput').value = text;
+                addUserMessage(text);
+                sendMessage(text);
+            };
+            
+            recognition.onerror = function() {
+                addJoyMessage("I couldn't hear that clearly. Try again! 🎤");
+            };
+            
+            recognition.start();
+        }
+
+        function speakText(text) {
+            if (!settings.voice || !('speechSynthesis' in window)) return;
+            
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice => 
+                voice.name.includes('Female') || voice.gender === 'female'
+            );
+            
+            if (femaleVoice) utterance.voice = femaleVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function checkBurnout(message) {
+            const burnoutWords = ['exhausted', 'overwhelmed', 'tired', 'burnt out', 'stressed'];
+            const count = burnoutWords.filter(word => message.toLowerCase().includes(word)).length;
+            
+            if (count >= 2) {
+                setTimeout(() => {
+                    addJoyMessage("Honey, I'm noticing burnout signals. Your wellbeing is THE foundation. Let's check in - how are you REALLY doing? 💜");
+                }, 2000);
+            }
+        }
+
+        function celebrateDopamine() {
+            if (!settings.sound) return;
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = ['#9D4EDD', '#FFB3D9', '#7209B7'][Math.floor(Math.random() * 3)];
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+
+        function playSound(type) {
+            if (!settings.sound) return;
+            
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+            
+            if (type === 'message') {
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.1;
+            } else if (type === 'switch') {
+                oscillator.frequency.value = 600;
+                gainNode.gain.value = 0.15;
+            }
+            
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.1);
+        }
+
+        function saveConversation() {
+            const messages = document.querySelectorAll('.message');
+            let text = '💜 AIVA JOY CONVERSATION LOG 💜\n';
+            text += `Date: ${new Date().toLocaleString()}\n`;
+            text += `Personality: ${personalities[currentPersonality].name}\n`;
+            text += '='.repeat(70) + '\n\n';
+            
+            messages.forEach(msg => {
+                const sender = msg.classList.contains('user') ? 'YOU' : 'JOY';
+                const content = msg.querySelector('.message-content').textContent.split('\n')[0];
+                text += `${sender}:\n${content}\n\n${''.repeat(70)}\n\n`;
+            });
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `joy_conversation_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addJoyMessage("Conversation saved! Check your downloads. 💜");
+            celebrateDopamine();
+        }
+
+        function clearChat() {
+            if (confirm('Clear our conversation?')) {
+                conversationHistory = [];
+                document.getElementById('messages').innerHTML = '';
+                greetUser();
+            }
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    </script>
+</body>
+</html>
